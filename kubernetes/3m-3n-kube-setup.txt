@@ -1,0 +1,142 @@
+Multi Master K8's Cluster setup Using Kubeadm Tool in AWS ubuntu server.
+
+we are using 3 master ubuntu server of 2cpu 4 gb ram and 8 gb storage.
+and also using 3 nodes or worker of 1cpu 1 gb ram 8 gb storage.
+also we required 1 load balancer machine for load balancing 
+masters and for k8s clint one more ec2 create install kubectl and config kubectl
+to manage the all system.
+create 8 ec2 as per above specification.
+create VPC for networking.
+
+step1---- Setting up loadbalencer .
+
+loging to loadbalencer ec2 machine
+switch to root user
+by    ---  sudo -i/sudo su
+update the machine 
+by   ---   sudo apt-get update && sudo apt-get upgrade -y
+
+step2-----install haproxy
+by --- sudo apt-get install haproxy -y
+
+step3----Edit haproxy configration 
+by --- vi /etc/haproxy/haproxy.cfg
+
+Add the below code to create frontend/backend configration .
+
+frontend fe-apiserver
+   bind 0.0.0.0:6443
+   mode tcp
+   option tcp log
+   default_backend be-apiserver
+backend be-apiserver
+   mode tcp
+   option tcp log
+   option tcp-check
+   balance roundrobin
+   default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 
+maxqueue 256 weight 100
+      
+   server master1 -------ip----:6443 check
+   server master2 -------ip----:6443 check
+   server master3 -------ip----:6443 check
+
+step4----restart and verify haproxy
+
+    systemctl restart haproxy
+    systemctl status haproxy
+check the haproxy is running 
+by ---- nc -v localhost 6443 
+  connection to localhost 6443 port [tcp/*] succeeded!
+
+NOTE--------------master1,master2,master3 conectivity ----------------fail----
+
+********************COMMANDS FOR DEMO********************
+Install kubeadm,kublet and docker on all three master and three worker nodes.
+login to all machine and perform all commands bellow.
+
+switche user--          sudo su /   sudo -i
+update the repositories ---       apt-get update
+
+Turn of swap-----  swapoff -a
+                   sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+
+Install docker----
+
+apt install docker.io -y
+docker --version
+systemctl start docker
+systemctl enable docker/ .service
+
+install kubeadm and kublet----
+
+apt-get update && apt-get install -y apt-transport-https curl ca certificates gnupn-agent software-prorerties-common
+
+
+sudo curl -s https://packages.cloud.google.com/apt... | sudo apt-key add 
+
+
+****  nano /etc/apt/sources.list.d/kubernetes.list
+      deb http://apt.kubernetes.io/ kubernetes-xenial main
+****
+      cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+      deb http://apt.kubernetes.io/ kubernetes-xenial main
+      EOF
+
+apt-get update
+apt-get install -y kublet kubeadm
+apt-mark hold kubelet kubeadm
+systemctl daemon-reload
+systemctl start kubelet
+systemctl enable kubelet.service
+
+*****apt-get install -y kubelet kubeadm kubectl kubernetes-cni****
+---------------------------------***********************------------------------------------
+
+CONFIGURING kubeadm to BOOTSTRAPPING THE MASTER NODE (LOGIN MASTER1)
+
+kubeadm init --control-plane-endpoint ------ip of loadbalencer--:6443 --upload-certs
+
+@@//follow the output of above command and coppy the tocken file and paste in the master1
+master2,master3 respectivly worker1,worker2,worker3@@//
+
+
+Configuring kubeconfig on loadbalancer COpy the three command which are output of above
+commands kubeadm init.
+
+              switch user to normal user the make directory and coppy the file from 
+any master and paste on loadbalancer node.
+
+1-----------  mkdir -p $HOME/.kube
+
+2------     vi ~/.kube/config 
+          ||cp -i /etc/kubernetes/admin.conf $HOME/.kube/config||
+go to master node and---   cat /etc/kubernetes/admin.conf    copy all file
+and paste in ---------loadbalancer node ----vi ~/.kube/config 
+
+3----------   chown $(id -u):$(id -g) $HOME/.kube/config --- kubectl cluster-info
+
+4-------------sudo snap install kubectl --classic
+
+verify cluster---------------kubectl get nodes
+
+////------------- kubectl apply -f https://raw.githubusercontent.com/cor...
+
+--------------kubectl apply -f https://raw.githubusercontent.com/cor...////
+--------------------------------------------*******************************---------------
+Install CNI and complete installation
+
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 |tr -d '\n')" 
+
+kubectl get node
+kubectl get pods -n kube-system
+kubectl get pods -n kube-system -o wide
+
+***********************END*************************************
+
+
+
+
+
+
