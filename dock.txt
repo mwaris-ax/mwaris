@@ -1,0 +1,19 @@
+1
+FROM ubuntu
+RUN echo "this is my first docker file" > /tmp/testfile
+2
+FROM ubuntu
+WORKDIR/tmp
+RUN echo "this is my first docker file" > /tmp/testfile
+ENV my name mohammadwaris
+COPY testfile1/tmp
+ADD test.tar.gz/tmp
+
+3
+FROM ubuntu
+VOLUME ["/myvolume"]   
+
+docker run -it --name volcon3 --privileged=true --volumes-from 
+volcon1 ubuntu /bin/bash                 
+
+docker run -it --name c1 -v /volume1 ubuntu /bin/bash

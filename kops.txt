@@ -1,0 +1,183 @@
+Assuming you have created Ubuntu Instance in your AWS account.
+Step #1: Install AWS CLI on Ubuntu
+
+To download the latest AWS CLI version for 64 bit Linux using curl use below command
+
+---curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+if you want download specific version of AWS CLI version then use below command
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-awscliversion.zip" -o "awscliv2.zip"
+
+To download AWS CLI Version 2.0.30 use below command
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.0.30.zip" -o "awscliv2.zip"
+
+---Install the unzip on Ubuntu if not installed
+
+---sudo apt install unzip
+
+Extract AWS CLI Setup on Linux using unzip
+
+---unzip awscliv2.zip
+
+Install AWS CLI on Linux
+
+once extracted Install AWS CLI on Linux using below command
+
+---sudo ./aws/install
+
+Output:
+
+-aws
+---You can now run: /usr/local/bin/aws --version
+
+Check the AWS CLI version using command line on Linux
+
+---/usr/local/bin/aws --version
+
+Output:
+
+-aws-cli/2.1.28 Python/3.8.8 Linux/4.14.214-160.339.amzn2.x86_64 exe/x86_64.amzn.2 prompt/off
+
+OR
+
+aws --version
+
+Output:
+
+-aws-cli/2.1.28 Python/3.8.8 Linux/4.14.214-160.339.amzn2.x86_64 exe/x86_64.amzn.2 prompt/off
+
+Step #2: Install Kubectl Binary with CURL on Ubuntu
+
+Download kubectl binary with curl on Ubuntu using below command
+
+---sudo curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+
+Make the kubectl binary executable
+
+---sudo chmod +x ./kubectl 
+
+Move kubectl to /usr/local/bin/kubectl directory
+
+---sudo mv ./kubectl /usr/local/bin/kubectl 
+
+Step #3: Install KOPS on Ubuntu Instance
+
+Download the KOPS  setup on Ubuntu using curl
+
+---curl -LO https://github.com/kubernetes/kops/releases/download/$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | grep tag_name | cut -d '"' -f 4)/kops-linux-amd64
+
+set the execution permission
+
+---sudo chmod +x kops-linux-amd64
+
+move the kops to /usr/local/bin directory
+
+---sudo mv kops-linux-amd64 /usr/local/bin/kops 
+
+5 create IAM role for 
+
+ec2 fa/vcp fa/s3 fa/IAM fa
+
+6-execute for s3 bucket
+
+#  ---------aws s3 mb s3://mykopsbucket.k8s.local
+
+# -----vi .bashrc
+
+export NAME=mykopsbucket.k8s.local
+export KOPS_STATE_STORE=s3://mykopsbucket.k8s.local
+
+-----source .bashrc
+awse$
+
+root@ip-172-31-34-111:/home# aws s3 ls
+2022-01-28 16:23:31 mykopsbucket.k8s.local
+root@ip-172-31-34-111:/home# source .bashrc
+root@ip-172-31-34-111:/home# echo $NAME
+mykopsbucket.k8s.local
+root@ip-172-31-34-111:/home# 
+
+---ssh-keygen
+
+
+---kops create cluster --cloud=aws --zones=ap-south-1a,ap-south-1b --networking calico --master-size t2.medium --master-count 2 --node-size t2.micro --node-count 2 ${NAME}
+
+{{{---kops create secret --name ${NAME} sshpublickey admin -i ~/.id_rsa.pub
+
+---ssh -i ~/.ssh/id_rsa admin@api.k8s.mykopsbucket.k8s.local}}}}}
+
+ssh -i ~/.ssh/id_rsa ubuntu@api.mykopsbucket.k8s.local
+ 
+---kops update cluster --name mykopsbucket.k8s.local --yes --admin
+
+kops update cluster mykbucket.k8s.local --yes --admin
+
+kops delete cluster mykopsbucket.k8s.local --yes
+
+Suggestions:
+* list clusters with: kops get cluster
+* edit this cluster with: kops edit cluster k8s.fosstechnix.info
+* edit your node instance group: kops edit ig --name=k8s.fosstechnix.info nodes-us-east-1a
+* edit your master instance group: kops edit ig --name=k8s.fosstechnix.info master-ap-south-1a
+
+Finally configure your cluster with: kops update cluster --name k8s.fosstechnix.info --yes --admin
+Configure the k8s kops cluster using below command,
+
+Sample Output:
+Cluster is starting.  It should be ready in a few minutes. 
+
+ Suggestions: 
+
+ * validate cluster: kops validate cluster 
+
+ * list nodes: kubectl get nodes --show-labels 
+
+ * ssh to the master: ssh -i ~/.ssh/id_rsa admin@api.k8s.fosstechnix.info
+
+ * the admin user is specific to Debian. If not using Debian please use the appropriate user based on your OS. 
+
+ * read about installing addons at: https://github.com/kubernetes/kops/blob/master/docs/operations/addons.md
+Validate the Kubernetes KOPS cluster
+kops validate cluster 
+To list the nodes
+kubectl get nodes  
+To get Cluster Information
+ 
+To delete Kubernetes KOPS cluster
+kops delete cluster k8s.fosstechnix.info --yes 
+Finally We have covered Setup Kubernetes on AWS using 
+
+
+https://github.com/kubernetes/kops/blob/master/permalinks/upgrade_kops.md#1.11.1
+
+sudo apt update
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt install python3.9
+update-alternatives --install /usr/bin/python python /usr/bin/python3.8.10
+
+sudo curl https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-python-2-7-in-aws-sdk-for-python-and-aw
+s-cli-v1/
+
+Step 1 – Requirements
+# yum install gcc openssl-devel bzip2-devel libffi-devel zlib-devel xz-devel
+
+Step 2 – Download Python 3.7
+# cd /usr/src
+# wget https://www.python.org/ftp/python/3.7...
+
+Now extract the downloaded package
+# tar xzf Python-3.7.11.tgz
+
+Step 3 – Install Python 3.7
+# cd Python-3.7.11
+# ./configure --enable-optimizations
+# make altinstall 
+
+Now remove downloaded source archive file from your system
+# rm /usr/src/Python-3.7.11.tgz
+
+Step 4 – Check Python Version
+# python3.7 -V
